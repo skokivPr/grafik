@@ -24,7 +24,7 @@
     --sunday-color: var(--secondary-red);
     --weekend-bg-light: rgba(255, 115, 0, 0.08);
     --weekend-bg-sunday-light: rgba(231, 76, 60, 0.08);
-
+    --bg-rgb: 115, 115, 115;
     /* Kolory wydarzeń - harmonijne z motywem */
     --event-work: #3d3d3d;
     /* Nocka - ciemny niebieski */
@@ -72,6 +72,7 @@
     /* Urlop - jaśniejszy zielony */
     --event-other: #ff6b6b;
     /* Inne - jaśniejszy czerwony */
+    --bg-rgb: 0, 0, 0;
 }
 
 * {
@@ -153,7 +154,6 @@ iconify-icon {
 
 .danger-btn:hover img {
     filter: brightness(0) saturate(100%) invert(100%);
-    transform: scale(1.1) translateY(-2px);
     animation: shake 0.5s ease-in-out;
 }
 
@@ -172,7 +172,9 @@ iconify-icon {
 }
 
 body {
-    background: var(--bg);
+    background: url(https://raw.githubusercontent.com/skokivPr/img/95ee3d7bbf6a07ffa5287e452ea9a6515203b1f0/container01.svg) no-repeat center center fixed;
+    background-size: cover;
+    background-color: var(--bg);
     color: var(--text-color);
     min-height: 100vh;
     width: 100vw;
@@ -183,6 +185,21 @@ body {
         background-color 0.3s,
         color 0.3s;
     padding: 0.5rem;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg);
+    background: url(https://raw.githubusercontent.com/skokivPr/img/95ee3d7bbf6a07ffa5287e452ea9a6515203b1f0/container01.svg) no-repeat center center fixed;
+    background-size: cover;
+    z-index: -1;
+    opacity: 0.8;
+    filter: invert(1) brightness(0.5) contrast(1.2);
 }
 
 .panel {
@@ -384,13 +401,13 @@ iconify-icon {
 
 /* Cała komórka dzisiejszego dnia */
 .calendar-day.today {
-    border: 1px solid var(--highlight-color);
+    border-left: 4px solid #ff8533;
     background-color: var(--weekend-bg-light);
 }
 
 :root[data-theme="dark"] .calendar-day.today {
     background-color: rgba(255, 115, 0, 0.15);
-    border-color: var(--highlight-color);
+    border-left: 4px solid #ff802bb7;
 }
 
 /* Święta państwowe */
@@ -895,7 +912,6 @@ iconify-icon {
     background-color: #dc3545;
     border-color: #dc3545;
     color: #fff;
-    transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
 }
 
@@ -931,7 +947,6 @@ iconify-icon {
 }
 
 .save-btn:hover {
-    transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(255, 115, 0, 0.3);
 }
 
