@@ -27,11 +27,15 @@ let events = {};
 let selectedDate = null;
 let isDarkTheme = true;
 
+// Domyślny URL do zewnętrznego grafiku
+const DEFAULT_GRAFIK_URL = "https://gist.githubusercontent.com/skokivPr/8b03dcd6351b84ae8fb66fc9fc141cfd/raw/e954332baa71bc30f59d30cd3c716cbb8134d856/grafik.json";
+
 // Ustawienia aplikacji
 let appSettings = {
     firstDayOfWeek: "monday", // "monday" lub "sunday"
     workHours: 12, // domyślnie 12h
     highlightWeekends: true,
+    grafikUrl: DEFAULT_GRAFIK_URL, // URL do pliku JSON
 };
 
 // Święta państwowe w Polsce (format: "YYYY-MM-DD")
@@ -86,12 +90,14 @@ const publicHolidays = {
 // --- FUNKCJE POMOCNICZE UI ---
 function showNotification(message, isError = false) {
     const notification = document.getElementById("notification");
-    notification.textContent = message;
-    notification.classList.toggle("error", isError);
-    notification.classList.add("show");
-    setTimeout(() => {
-        notification.classList.remove("show");
-    }, 3000);
+    if (notification) {
+        notification.textContent = message;
+        notification.classList.toggle("error", isError);
+        notification.classList.add("show");
+        setTimeout(() => {
+            notification.classList.remove("show");
+        }, 3000);
+    }
 }
 
 // --- FUNKCJE MOTYWU ---
@@ -134,56 +140,68 @@ function loadThemePreference() {
 function initTheme() {
     loadThemePreference();
     applyTheme();
-    window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .addEventListener("change", (e) => {
-            if (!localStorage.getItem("theme")) {
-                isDarkTheme = e.matches;
-                applyTheme();
-            }
-        });
+    try {
+        window
+            .matchMedia("(prefers-color-scheme: dark)")
+            .addEventListener("change", (e) => {
+                if (!localStorage.getItem("theme")) {
+                    isDarkTheme = e.matches;
+                    applyTheme();
+                }
+            });
+    } catch (e) {
+        console.log("MatchMedia not supported");
+    }
 }
 
 // --- FUNKCJE MODALI ---
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
-    // Użyj requestAnimationFrame dla płynnej animacji
-    requestAnimationFrame(() => {
+    if (modal) {
+        // Użyj requestAnimationFrame dla płynnej animacji
         requestAnimationFrame(() => {
-            modal.classList.add("visible");
+            requestAnimationFrame(() => {
+                modal.classList.add("visible");
+            });
         });
-    });
+    }
 }
 
 function closeModal(modalId) {
     const modal = document.getElementById(modalId);
-    modal.classList.remove("visible");
+    if (modal) modal.classList.remove("visible");
 }
 
 function openEventModal(dateStr) {
     selectedDate = dateStr;
     const [year, month, day] = dateStr.split("-").map(Number);
-    document.getElementById(
-        "modal-date"
-    ).textContent = `Data: ${day} ${monthNames[month]} ${year}`;
-    document.getElementById("event-text").value = "";
+    const modalDateEl = document.getElementById("modal-date");
+    if (modalDateEl) modalDateEl.textContent = `Data: ${day} ${monthNames[month]} ${year}`;
+
+    const eventTextEl = document.getElementById("event-text");
+    if (eventTextEl) {
+        eventTextEl.value = "";
+        // Focus z małym opóźnieniem po otwarciu
+        setTimeout(() => {
+            eventTextEl.focus();
+        }, 100);
+    }
+
     openModal("event-modal");
-    // Focus z małym opóźnieniem po otwarciu
-    setTimeout(() => {
-        document.getElementById("event-text").focus();
-    }, 100);
 }
 
 // --- FUNKCJE WYDARZEŃ ---
 function selectQuickOption(option) {
-    document.getElementById("event-text").value = option;
+    const el = document.getElementById("event-text");
+    if (el) el.value = option;
     saveEvent();
 }
 
 function saveEvent() {
-    const eventText = document
-        .getElementById("event-text")
-        .value.trim();
+    const el = document.getElementById("event-text");
+    if (!el) return;
+    const eventText = el.value.trim();
+
     if (eventText && selectedDate) {
         if (!events[selectedDate]) events[selectedDate] = [];
         if (!events[selectedDate].includes(eventText)) {
@@ -196,13 +214,11 @@ function saveEvent() {
 }
 
 function confirmDeleteEvent(dateStr, eventText) {
-    const modal = document.getElementById("confirmation-modal");
     const message = document.getElementById("confirmation-message");
-    const confirmBtn =
-        document.getElementById("confirm-delete-btn");
+    const confirmBtn = document.getElementById("confirm-delete-btn");
     const cancelBtn = document.getElementById("confirm-cancel-btn");
 
-    message.textContent = `Czy na pewno chcesz usunąć wydarzenie "${eventText}"?`;
+    if (message) message.textContent = `Czy na pewno chcesz usunąć wydarzenie "${eventText}"?`;
 
     const deleteHandler = () => {
         if (events[dateStr] && eventText) {
@@ -215,16 +231,20 @@ function confirmDeleteEvent(dateStr, eventText) {
             render();
         }
         closeModal("confirmation-modal");
-        confirmBtn.removeEventListener("click", deleteHandler);
+        if (confirmBtn) confirmBtn.removeEventListener("click", deleteHandler);
     };
 
-    confirmBtn.addEventListener("click", deleteHandler, {
-        once: true,
-    });
-    cancelBtn.onclick = () => {
-        closeModal("confirmation-modal");
-        confirmBtn.removeEventListener("click", deleteHandler);
-    };
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", deleteHandler, {
+            once: true,
+        });
+    }
+    if (cancelBtn) {
+        cancelBtn.onclick = () => {
+            closeModal("confirmation-modal");
+            if (confirmBtn) confirmBtn.removeEventListener("click", deleteHandler);
+        };
+    }
 
     openModal("confirmation-modal");
 }
@@ -245,6 +265,7 @@ function loadEventsFromLocalStorage() {
 function loadSettingsFromLocalStorage() {
     const savedSettings = localStorage.getItem("calendarSettings");
     if (savedSettings) {
+        // Łączymy zapisane ustawienia z domyślnymi, aby obsłużyć nowe pola (np. grafikUrl)
         appSettings = { ...appSettings, ...JSON.parse(savedSettings) };
     }
 }
@@ -255,10 +276,20 @@ function saveSettingsToLocalStorage() {
 
 function openSettingsModal() {
     // Ustaw wartości w modal na podstawie bieżących ustawień
-    document.getElementById("theme-select").value = isDarkTheme ? "dark" : "light";
-    document.getElementById("first-day-select").value = appSettings.firstDayOfWeek;
-    document.getElementById("work-hours-input").value = appSettings.workHours;
-    document.getElementById("highlight-weekends").checked = appSettings.highlightWeekends;
+    const themeSelect = document.getElementById("theme-select");
+    if (themeSelect) themeSelect.value = isDarkTheme ? "dark" : "light";
+
+    const firstDaySelect = document.getElementById("first-day-select");
+    if (firstDaySelect) firstDaySelect.value = appSettings.firstDayOfWeek;
+
+    const workHoursInput = document.getElementById("work-hours-input");
+    if (workHoursInput) workHoursInput.value = appSettings.workHours;
+
+    const highlightWeekends = document.getElementById("highlight-weekends");
+    if (highlightWeekends) highlightWeekends.checked = appSettings.highlightWeekends;
+
+    const grafikUrlInput = document.getElementById("grafik-url-input");
+    if (grafikUrlInput) grafikUrlInput.value = appSettings.grafikUrl || DEFAULT_GRAFIK_URL;
 
     openModal("settings-modal");
 }
@@ -286,6 +317,23 @@ function changeWorkHours(hours) {
     }
 }
 
+function changeGrafikUrl(url) {
+    const trimmedUrl = url.trim();
+    if (trimmedUrl) {
+        appSettings.grafikUrl = trimmedUrl;
+        saveSettingsToLocalStorage();
+        showNotification("Adres grafiku został zaktualizowany");
+    }
+}
+
+function resetGrafikUrl() {
+    appSettings.grafikUrl = DEFAULT_GRAFIK_URL;
+    const input = document.getElementById("grafik-url-input");
+    if (input) input.value = DEFAULT_GRAFIK_URL;
+    saveSettingsToLocalStorage();
+    showNotification("Przywrócono domyślny adres grafiku");
+}
+
 function toggleHighlightWeekends(highlight) {
     appSettings.highlightWeekends = highlight;
     saveSettingsToLocalStorage();
@@ -297,12 +345,11 @@ function toggleHighlightWeekends(highlight) {
 }
 
 function clearAllData() {
-    const modal = document.getElementById("confirmation-modal");
     const message = document.getElementById("confirmation-message");
     const confirmBtn = document.getElementById("confirm-delete-btn");
     const cancelBtn = document.getElementById("confirm-cancel-btn");
 
-    message.textContent = "Czy na pewno chcesz usunąć wszystkie dane kalendarza? Ta operacja jest nieodwracalna.";
+    if (message) message.textContent = "Czy na pewno chcesz usunąć wszystkie dane kalendarza? Ta operacja jest nieodwracalna.";
 
     const clearHandler = () => {
         events = {};
@@ -311,16 +358,20 @@ function clearAllData() {
         closeModal("confirmation-modal");
         closeModal("settings-modal");
         showNotification("Wszystkie dane zostały usunięte");
-        confirmBtn.removeEventListener("click", clearHandler);
+        if (confirmBtn) confirmBtn.removeEventListener("click", clearHandler);
     };
 
-    confirmBtn.addEventListener("click", clearHandler, {
-        once: true,
-    });
-    cancelBtn.onclick = () => {
-        closeModal("confirmation-modal");
-        confirmBtn.removeEventListener("click", clearHandler);
-    };
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", clearHandler, {
+            once: true,
+        });
+    }
+    if (cancelBtn) {
+        cancelBtn.onclick = () => {
+            closeModal("confirmation-modal");
+            if (confirmBtn) confirmBtn.removeEventListener("click", clearHandler);
+        };
+    }
 
     openModal("confirmation-modal");
 }
@@ -380,6 +431,33 @@ function importData() {
     input.click();
 }
 
+async function loadDataFromUrl() {
+    const urlToFetch = appSettings.grafikUrl || DEFAULT_GRAFIK_URL;
+
+    try {
+        showNotification("Pobieranie grafiku online...");
+        const response = await fetch(urlToFetch);
+
+        if (!response.ok) {
+            throw new Error(`Błąd HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (typeof data === "object" && data !== null) {
+            events = data;
+            saveEventsToLocalStorage();
+            render();
+            showNotification("Grafik online załadowany pomyślnie!");
+        } else {
+            throw new Error("Nieprawidłowy format danych z serwera");
+        }
+    } catch (error) {
+        console.error("Błąd pobierania:", error);
+        showNotification("Nie udało się pobrać grafiku online.", true);
+    }
+}
+
 // --- RENDEROWANIE KALENDARZA ---
 function render() {
     updateWeekdaysHeader();
@@ -389,6 +467,7 @@ function render() {
 
 function updateWeekdaysHeader() {
     const weekdaysGrid = document.querySelector(".weekdays-grid");
+    if (!weekdaysGrid) return;
 
     if (appSettings.firstDayOfWeek === "monday") {
         weekdaysGrid.innerHTML = `
@@ -415,13 +494,15 @@ function updateWeekdaysHeader() {
 
 function renderCalendarGrid() {
     const calendarGrid = document.getElementById("calendar-grid");
+    const monthYear = document.getElementById("month-year");
+
+    if (!calendarGrid || !monthYear) return;
+
     calendarGrid.innerHTML = "";
 
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
-    document.getElementById(
-        "month-year"
-    ).textContent = `${monthNames[month]} ${year}`;
+    monthYear.textContent = `${monthNames[month]} ${year}`;
 
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
@@ -715,11 +796,12 @@ document.addEventListener("DOMContentLoaded", function () {
         };
     });
 
-    document
-        .getElementById("event-text")
-        .addEventListener("keydown", function (e) {
+    const eventTextInput = document.getElementById("event-text");
+    if (eventTextInput) {
+        eventTextInput.addEventListener("keydown", function (e) {
             if (e.key === "Enter") saveEvent();
         });
+    }
 
     document.addEventListener("keydown", function (e) {
         if (e.key === "Escape") {
@@ -731,4 +813,50 @@ document.addEventListener("DOMContentLoaded", function () {
 
     loadEventsFromLocalStorage();
     render();
+});
+
+// Expose functions to global scope for inline HTML handlers
+window.prevMonth = prevMonth;
+window.nextMonth = nextMonth;
+window.toggleTheme = toggleTheme;
+window.openSettingsModal = openSettingsModal;
+window.importData = importData;
+window.loadDataFromUrl = loadDataFromUrl;
+window.exportData = exportData;
+window.selectQuickOption = selectQuickOption;
+window.closeModal = closeModal;
+window.saveEvent = saveEvent;
+window.changeThemeFromSettings = changeThemeFromSettings;
+window.changeFirstDay = changeFirstDay;
+window.changeWorkHours = changeWorkHours;
+window.toggleHighlightWeekends = toggleHighlightWeekends;
+window.changeGrafikUrl = changeGrafikUrl;
+window.resetGrafikUrl = resetGrafikUrl;
+window.clearAllData = clearAllData;
+
+
+// Add these to your existing script section
+document.addEventListener("DOMContentLoaded", function () {
+    // Remove draggable attribute from all elements
+    document.querySelectorAll('[draggable="true"]').forEach((el) => {
+        el.removeAttribute("draggable");
+    });
+
+    // Prevent dragstart event
+    document.addEventListener("dragstart", function (e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // Prevent drop event
+    document.addEventListener("drop", function (e) {
+        e.preventDefault();
+        return false;
+    });
+
+    // Prevent dragover event
+    document.addEventListener("dragover", function (e) {
+        e.preventDefault();
+        return false;
+    });
 });
