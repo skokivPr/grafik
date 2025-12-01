@@ -5,30 +5,38 @@ window.addEventListener("load", function () {
     loadSettingsFromLocalStorage();
     loadEventsFromLocalStorage();
     render();
+
+    // Automatyczne ładowanie danych z URL przy starcie
+    loadDataFromUrl();
+
+    // Prevent drag and drop defaults
+    document.querySelectorAll('[draggable="true"]').forEach((el) => {
+        el.removeAttribute("draggable");
+    });
+    document.addEventListener("dragstart", (e) => { e.preventDefault(); return false; });
+    document.addEventListener("drop", (e) => { e.preventDefault(); return false; });
+    document.addEventListener("dragover", (e) => { e.preventDefault(); return false; });
 });
 
 // --- GLOBALNE ZMIENNE ---
 const monthNames = [
-    "Styczeń",
-    "Luty",
-    "Marzec",
-    "Kwiecień",
-    "Maj",
-    "Czerwiec",
-    "Lipiec",
-    "Sierpień",
-    "Wrzesień",
-    "Październik",
-    "Listopad",
-    "Grudzień",
+    "Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec",
+    "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień",
 ];
 let currentDate = new Date();
 let events = {};
 let selectedDate = null;
 let isDarkTheme = true;
 
-// Domyślny URL do zewnętrznego grafiku
-const DEFAULT_GRAFIK_URL = "https://gist.githubusercontent.com/skokivPr/8b03dcd6351b84ae8fb66fc9fc141cfd/raw/e954332baa71bc30f59d30cd3c716cbb8134d856/grafik.json";
+// Konfiguracja GitHub do pobierania danych
+const GITHUB_USER = 'skokivPr';
+const GITHUB_REPO = 'json-lista';
+const GITHUB_FILE = 'grafik.json';
+const URL_MAIN = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/main/${GITHUB_FILE}`;
+const URL_MASTER = `https://raw.githubusercontent.com/${GITHUB_USER}/${GITHUB_REPO}/master/${GITHUB_FILE}`;
+
+// Domyślny URL (ustawiony na MAIN z repozytorium)
+const DEFAULT_GRAFIK_URL = URL_MAIN;
 
 // Ustawienia aplikacji
 let appSettings = {
@@ -87,6 +95,29 @@ const publicHolidays = {
     ],
 };
 
+// --- URL SANITIZER (Naprawa linków) ---
+function sanitizeUrl(url) {
+    try {
+        if (!url) return '';
+        const u = new URL(url);
+
+        // 1. Konwersja GitHub Blob -> Raw
+        if (u.hostname === 'github.com' && u.pathname.includes('/blob/')) {
+            u.hostname = 'raw.githubusercontent.com';
+            u.pathname = u.pathname.replace('/blob/', '/');
+        }
+
+        // 2. Obsługa Gist (Naprawa błędu CORS)
+        if (u.hostname === 'gist.github.com') {
+            u.hostname = 'gist.githubusercontent.com';
+        }
+
+        return u.toString();
+    } catch (e) {
+        return url;
+    }
+}
+
 // --- FUNKCJE POMOCNICZE UI ---
 function showNotification(message, isError = false) {
     const notification = document.getElementById("notification");
@@ -108,7 +139,7 @@ function toggleTheme() {
 }
 
 function applyTheme() {
-    const body = document.documentElement; // Change to html element for :root
+    const body = document.documentElement;
     body.setAttribute("data-theme", isDarkTheme ? "dark" : "light");
     updateThemeIcon();
 }
@@ -133,16 +164,14 @@ function loadThemePreference() {
     const savedTheme = localStorage.getItem("theme");
     isDarkTheme = savedTheme
         ? savedTheme === "dark"
-        : window.matchMedia?.("(prefers-color-scheme: dark)")
-            .matches;
+        : window.matchMedia?.("(prefers-color-scheme: dark)").matches;
 }
 
 function initTheme() {
     loadThemePreference();
     applyTheme();
     try {
-        window
-            .matchMedia("(prefers-color-scheme: dark)")
+        window.matchMedia("(prefers-color-scheme: dark)")
             .addEventListener("change", (e) => {
                 if (!localStorage.getItem("theme")) {
                     isDarkTheme = e.matches;
@@ -158,7 +187,6 @@ function initTheme() {
 function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
-        // Użyj requestAnimationFrame dla płynnej animacji
         requestAnimationFrame(() => {
             requestAnimationFrame(() => {
                 modal.classList.add("visible");
@@ -181,12 +209,10 @@ function openEventModal(dateStr) {
     const eventTextEl = document.getElementById("event-text");
     if (eventTextEl) {
         eventTextEl.value = "";
-        // Focus z małym opóźnieniem po otwarciu
         setTimeout(() => {
             eventTextEl.focus();
         }, 100);
     }
-
     openModal("event-modal");
 }
 
@@ -235,9 +261,7 @@ function confirmDeleteEvent(dateStr, eventText) {
     };
 
     if (confirmBtn) {
-        confirmBtn.addEventListener("click", deleteHandler, {
-            once: true,
-        });
+        confirmBtn.addEventListener("click", deleteHandler, { once: true });
     }
     if (cancelBtn) {
         cancelBtn.onclick = () => {
@@ -245,7 +269,6 @@ function confirmDeleteEvent(dateStr, eventText) {
             if (confirmBtn) confirmBtn.removeEventListener("click", deleteHandler);
         };
     }
-
     openModal("confirmation-modal");
 }
 
@@ -265,7 +288,6 @@ function loadEventsFromLocalStorage() {
 function loadSettingsFromLocalStorage() {
     const savedSettings = localStorage.getItem("calendarSettings");
     if (savedSettings) {
-        // Łączymy zapisane ustawienia z domyślnymi, aby obsłużyć nowe pola (np. grafikUrl)
         appSettings = { ...appSettings, ...JSON.parse(savedSettings) };
     }
 }
@@ -275,7 +297,6 @@ function saveSettingsToLocalStorage() {
 }
 
 function openSettingsModal() {
-    // Ustaw wartości w modal na podstawie bieżących ustawień
     const themeSelect = document.getElementById("theme-select");
     if (themeSelect) themeSelect.value = isDarkTheme ? "dark" : "light";
 
@@ -318,7 +339,7 @@ function changeWorkHours(hours) {
 }
 
 function changeGrafikUrl(url) {
-    const trimmedUrl = url.trim();
+    const trimmedUrl = sanitizeUrl(url.trim());
     if (trimmedUrl) {
         appSettings.grafikUrl = trimmedUrl;
         saveSettingsToLocalStorage();
@@ -337,10 +358,7 @@ function resetGrafikUrl() {
 function toggleHighlightWeekends(highlight) {
     appSettings.highlightWeekends = highlight;
     saveSettingsToLocalStorage();
-
-    // Dodaj lub usuń klasę CSS do/z body
     document.documentElement.classList.toggle("hide-weekend-highlight", !highlight);
-
     showNotification(highlight ? "Weekendy są teraz wyróżnione" : "Wyróżnienie weekendów zostało wyłączone");
 }
 
@@ -362,31 +380,24 @@ function clearAllData() {
     };
 
     if (confirmBtn) {
-        confirmBtn.addEventListener("click", clearHandler, {
-            once: true,
-        });
+        confirmBtn.addEventListener("click", clearHandler, { once: true });
     }
     if (cancelBtn) {
         cancelBtn.onclick = () => {
             closeModal("confirmation-modal");
-            if (confirmBtn) confirmBtn.removeEventListener("click", clearHandler);
+            if (confirmBtn) confirmBtn.removeEventListener("click", deleteHandler);
         };
     }
-
     openModal("confirmation-modal");
 }
 
 function exportData() {
     const dataStr = JSON.stringify(events, null, 2);
-    const dataBlob = new Blob([dataStr], {
-        type: "application/json",
-    });
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `kalendarz-dane-${new Date()
-        .toISOString()
-        .slice(0, 10)}.json`;
+    link.download = `kalendarz-dane-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -405,24 +416,16 @@ function importData() {
         reader.onload = function (e) {
             try {
                 const importedEvents = JSON.parse(e.target.result);
-                if (
-                    typeof importedEvents === "object" &&
-                    importedEvents !== null
-                ) {
+                if (typeof importedEvents === "object" && importedEvents !== null) {
                     events = importedEvents;
                     saveEventsToLocalStorage();
                     render();
-                    showNotification(
-                        "Dane zostały pomyślnie zaimportowane!"
-                    );
+                    showNotification("Dane zostały pomyślnie zaimportowane!");
                 } else {
                     throw new Error("Nieprawidłowy format pliku.");
                 }
             } catch (error) {
-                showNotification(
-                    "Błąd podczas importowania pliku.",
-                    true
-                );
+                showNotification("Błąd podczas importowania pliku.", true);
                 console.error("Błąd importu:", error);
             }
         };
@@ -431,30 +434,113 @@ function importData() {
     input.click();
 }
 
-async function loadDataFromUrl() {
-    const urlToFetch = appSettings.grafikUrl || DEFAULT_GRAFIK_URL;
-
-    try {
-        showNotification("Pobieranie grafiku online...");
-        const response = await fetch(urlToFetch);
-
-        if (!response.ok) {
-            throw new Error(`Błąd HTTP: ${response.status}`);
+// --- FUNKCJA ŁĄCZENIA DANYCH (MERGE) ---
+function mergeCalendarData(incomingData) {
+    let changed = false;
+    for (const [date, list] of Object.entries(incomingData)) {
+        if (!events[date]) {
+            events[date] = [];
         }
+        if (Array.isArray(list)) {
+            list.forEach(item => {
+                if (!events[date].includes(item)) {
+                    events[date].push(item);
+                    changed = true;
+                }
+            });
+        }
+    }
+    return changed;
+}
 
+// --- DATA FETCHING (ZAAWANSOWANE Z FALLBACKIEM) ---
+function loadDataFromUrl() {
+    const calendarGrid = document.getElementById("calendar-grid");
+
+    // Jeśli URL w ustawieniach jest inny niż domyślny, używamy go bezpośrednio (z sanitization)
+    // Jeśli jest domyślny lub pusty, używamy logiki Main -> Master
+    let useFallbackLogic = false;
+
+    if (!appSettings.grafikUrl || appSettings.grafikUrl === DEFAULT_GRAFIK_URL || appSettings.grafikUrl.includes(GITHUB_REPO)) {
+        useFallbackLogic = true;
+    }
+
+    if (!useFallbackLogic) {
+        // Standardowe pobieranie dla customowego URL (np. Gist)
+        fetchSimpleUrl(appSettings.grafikUrl);
+        return;
+    }
+
+    // Zaawansowane pobieranie (Main -> Master)
+    console.log(`Próba pobrania danych z: ${URL_MAIN}`);
+    showNotification("Pobieranie grafiku online...");
+
+    fetch(URL_MAIN)
+        .then(res => {
+            if (res.ok) return res.json();
+            console.warn(`Błąd pobierania z main (${res.status}). Próba z gałęzi master: ${URL_MASTER}`);
+            return fetch(URL_MASTER).then(resMaster => {
+                if (!resMaster.ok) {
+                    throw new Error(`Nie znaleziono pliku w gałęziach main ani master (Status: ${resMaster.status})`);
+                }
+                return resMaster.json();
+            });
+        })
+        .then(data => {
+            console.log("Dane załadowane pomyślnie:", data);
+            if (typeof data === "object" && data !== null) {
+                // ZMIANA: Zamiast events = data, używamy mergeCalendarData
+                mergeCalendarData(data);
+                saveEventsToLocalStorage();
+                render();
+                showNotification("Grafik online załadowany pomyślnie!");
+            } else {
+                throw new Error("Nieprawidłowy format danych z serwera");
+            }
+        })
+        .catch(error => {
+            console.error("Krytyczny błąd ładowania:", error);
+            showNotification("Błąd pobierania danych", true);
+
+            // Wyświetlenie błędu wewnątrz siatki kalendarza
+            if (calendarGrid && Object.keys(events).length === 0) { // Pokaż błąd tylko jeśli nie ma żadnych wydarzeń
+                calendarGrid.innerHTML = `
+                    <div style="padding:4rem 2rem; text-align:center; color:var(--text-muted); grid-column:1/-1;">
+                        <i data-lucide="alert-triangle" size="48" color="#ef4444" style="margin-bottom:1rem"></i><br>
+                        <strong>SYSTEM ERROR: UNABLE TO FETCH DATA</strong><br>
+                        <span style="font-size:0.8em; opacity:0.7">${error.message}</span><br><br>
+                        <div style="font-size:0.7em; color:var(--text-muted); background:var(--bg-secondary); padding:1rem; display:inline-block; border:1px solid var(--border-color); border-radius: 8px;">
+                            Sprawdź czy plik <strong>${GITHUB_FILE}</strong> istnieje w repozytorium <strong>${GITHUB_REPO}</strong><br>
+                            Użytkownik: ${GITHUB_USER}
+                        </div>
+                    </div>
+                `;
+                if (typeof lucide !== 'undefined') {
+                    lucide.createIcons();
+                }
+            }
+        });
+}
+
+// Funkcja pomocnicza do prostego fetchowania (dla custom URL)
+async function fetchSimpleUrl(url) {
+    try {
+        showNotification("Pobieranie grafiku z adresu niestandardowego...");
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Błąd HTTP: ${response.status}`);
         const data = await response.json();
-
         if (typeof data === "object" && data !== null) {
-            events = data;
+            // ZMIANA: Używamy mergeCalendarData
+            mergeCalendarData(data);
             saveEventsToLocalStorage();
             render();
             showNotification("Grafik online załadowany pomyślnie!");
         } else {
-            throw new Error("Nieprawidłowy format danych z serwera");
+            throw new Error("Nieprawidłowy format danych");
         }
     } catch (error) {
         console.error("Błąd pobierania:", error);
-        showNotification("Nie udało się pobrać grafiku online.", true);
+        showNotification("Nie udało się pobrać grafiku.", true);
     }
 }
 
@@ -471,23 +557,11 @@ function updateWeekdaysHeader() {
 
     if (appSettings.firstDayOfWeek === "monday") {
         weekdaysGrid.innerHTML = `
-            <div>Pon</div>
-            <div>Wto</div>
-            <div>Śro</div>
-            <div>Czw</div>
-            <div>Pią</div>
-            <div>Sob</div>
-            <div>Nie</div>
+            <div>Pon</div><div>Wto</div><div>Śro</div><div>Czw</div><div>Pią</div><div>Sob</div><div>Nie</div>
         `;
     } else {
         weekdaysGrid.innerHTML = `
-            <div>Nie</div>
-            <div>Pon</div>
-            <div>Wto</div>
-            <div>Śro</div>
-            <div>Czw</div>
-            <div>Pią</div>
-            <div>Sob</div>
+            <div>Nie</div><div>Pon</div><div>Wto</div><div>Śro</div><div>Czw</div><div>Pią</div><div>Sob</div>
         `;
     }
 }
@@ -509,12 +583,10 @@ function renderCalendarGrid() {
     const daysInMonth = lastDayOfMonth.getDate();
     let startDay = firstDayOfMonth.getDay();
 
-    // Dostosuj startDay w zależności od ustawienia firstDayOfWeek
     if (appSettings.firstDayOfWeek === "monday") {
         if (startDay === 0) startDay = 7;
         startDay--;
     }
-    // Dla sunday jako pierwszy dzień, startDay pozostaje bez zmian (0 = niedziela)
 
     const prevMonthLastDay = new Date(year, month, 0);
     const prevMonthDays = prevMonthLastDay.getDate();
@@ -531,8 +603,7 @@ function renderCalendarGrid() {
     }
 
     const totalCells = startDay + daysInMonth;
-    const remainingCells =
-        totalCells > 35 ? 42 - totalCells : 35 - totalCells;
+    const remainingCells = totalCells > 35 ? 42 - totalCells : 35 - totalCells;
     for (let i = 1; i <= remainingCells; i++) {
         const date = new Date(year, month + 1, i);
         const dateStr = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -542,8 +613,7 @@ function renderCalendarGrid() {
 
 function createDayCell(day, dateStr, isOtherMonth) {
     const dayCell = document.createElement("div");
-    dayCell.className = `calendar-day ${isOtherMonth ? "other-month" : ""
-        }`;
+    dayCell.className = `calendar-day ${isOtherMonth ? "other-month" : ""}`;
     dayCell.dataset.date = dateStr;
 
     const dayNumber = document.createElement("span");
@@ -553,16 +623,9 @@ function createDayCell(day, dateStr, isOtherMonth) {
     const eventsContainer = document.createElement("div");
     eventsContainer.className = "events-container";
 
-    // Sprawdź czy to dzisiejszy dzień
     const today = new Date();
     const [y, m, d] = dateStr.split("-").map(Number);
-    const isToday =
-        today.getFullYear() === y &&
-        today.getMonth() === m &&
-        today.getDate() === d &&
-        !isOtherMonth;
-
-    // Sprawdź czy to święto państwowe
+    const isToday = today.getFullYear() === y && today.getMonth() === m && today.getDate() === d && !isOtherMonth;
     const isHoliday = !isOtherMonth && isPublicHoliday(y, m, d);
 
     if (isToday) {
@@ -577,14 +640,11 @@ function createDayCell(day, dateStr, isOtherMonth) {
     }
 
     dayCell.appendChild(dayNumber);
-
     dayCell.appendChild(eventsContainer);
 
     if (events[dateStr]) {
         events[dateStr].forEach((eventText) => {
-            eventsContainer.appendChild(
-                createEventElement(eventText, dateStr)
-            );
+            eventsContainer.appendChild(createEventElement(eventText, dateStr));
         });
     }
 
@@ -601,18 +661,10 @@ function createEventElement(text, dateStr) {
 
     let eventClass = "event-blue";
     switch (text.toLowerCase()) {
-        case "nocka":
-            eventClass = "event-gray";
-            break;
-        case "dniówka":
-            eventClass = "event-yellow";
-            break;
-        case "nadgodziny":
-            eventClass = "event-purple";
-            break;
-        case "urlop":
-            eventClass = "event-green";
-            break;
+        case "nocka": eventClass = "event-gray"; break;
+        case "dniówka": eventClass = "event-yellow"; break;
+        case "nadgodziny": eventClass = "event-purple"; break;
+        case "urlop": eventClass = "event-green"; break;
     }
     eventEl.classList.add(eventClass);
 
@@ -640,7 +692,6 @@ function createEventElement(text, dateStr) {
 function isPublicHoliday(year, month, day) {
     const holidays = publicHolidays[year];
     if (!holidays) return false;
-
     const dateKey = `${year}-${month}-${day}`;
     return holidays.includes(dateKey);
 }
@@ -649,17 +700,13 @@ function calculateWorkingDaysInMonth(year, month) {
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
-
     let workingDays = 0;
     let holidays = 0;
 
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dayOfWeek = date.getDay();
-
-        // Dni robocze: poniedziałek (1) - piątek (5), ale bez świąt
         if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-            // Sprawdź czy to nie jest święto
             if (isPublicHoliday(year, month, day)) {
                 holidays++;
             } else {
@@ -667,7 +714,6 @@ function calculateWorkingDaysInMonth(year, month) {
             }
         }
     }
-
     return { workingDays, holidays };
 }
 
@@ -679,7 +725,6 @@ function calculateSummary() {
     const month = currentDate.getMonth();
     let nocki = 0, dniowki = 0, nadgodziny = 0, urlopy = 0;
 
-    // Zlicz wydarzenia w bieżącym miesiącu
     for (const dateStr in events) {
         const [eventYear, eventMonth] = dateStr.split("-").map(Number);
         if (eventYear === year && eventMonth === month) {
@@ -694,76 +739,29 @@ function calculateSummary() {
         }
     }
 
-    // Obliczenia dla systemu 12h
-    const przepracowanoDni = nocki + dniowki + nadgodziny; // urlopy nie wliczane
+    const przepracowanoDni = nocki + dniowki + nadgodziny;
     const przepracowanoGodzin = przepracowanoDni * appSettings.workHours;
-
-    // Norma miesiąca (dni robocze * 8h oficjalna norma)
     const monthData = calculateWorkingDaysInMonth(year, month);
     const normaGodzin = monthData.workingDays * 8;
-
-    // Ile dni po 12h trzeba przepracować żeby osiągnąć normę (zaokrąglone w górę)
     const normaDni12h = Math.ceil(normaGodzin / appSettings.workHours);
-
-    // Różnice
     const roznicaDni = przepracowanoDni - normaDni12h;
     const roznicaGodzin = przepracowanoGodzin - normaGodzin;
     const roznicaKolor = roznicaGodzin >= 0 ? "positive" : "negative";
 
     summaryContent.innerHTML = `
-        <div class="summary-item">
-            <p class="summary-number">${nocki}</p>
-            <p class="summary-label">Nocek</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-number">${dniowki}</p>
-            <p class="summary-label">Dniówek</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-number">${nadgodziny}</p>
-            <p class="summary-label">Nadgodzin</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-number">${urlopy}</p>
-            <p class="summary-label">Urlopów</p>
-        </div>
-        
+        <div class="summary-item"><p class="summary-number">${nocki}</p><p class="summary-label">Nocek</p></div>
+        <div class="summary-item"><p class="summary-number">${dniowki}</p><p class="summary-label">Dniówek</p></div>
+        <div class="summary-item"><p class="summary-number">${nadgodziny}</p><p class="summary-label">Nadgodzin</p></div>
+        <div class="summary-item"><p class="summary-number">${urlopy}</p><p class="summary-label">Urlopów</p></div>
         <div class="summary-divider"></div>
-        
-        <div class="summary-item">
-            <p class="summary-number">${przepracowanoDni}</p>
-            <p class="summary-label">Przepracowano</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-number summary-norm">${normaDni12h}</p>
-            <p class="summary-label">Norma (dni po ${appSettings.workHours}h)</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-number summary-${roznicaKolor}">${roznicaDni >= 0 ? '+' : ''}${roznicaDni}</p>
-            <p class="summary-label">Różnica dni</p>
-        </div>
-        
+        <div class="summary-item"><p class="summary-number">${przepracowanoDni}</p><p class="summary-label">Przepracowano</p></div>
+        <div class="summary-item"><p class="summary-number summary-norm">${normaDni12h}</p><p class="summary-label">Norma (dni po ${appSettings.workHours}h)</p></div>
+        <div class="summary-item"><p class="summary-number summary-${roznicaKolor}">${roznicaDni >= 0 ? '+' : ''}${roznicaDni}</p><p class="summary-label">Różnica dni</p></div>
         <div class="summary-divider"></div>
-        
-        <div class="summary-item">
-            <p class="summary-number">${przepracowanoGodzin}h</p>
-            <p class="summary-label">Suma godzin</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-number summary-norm">${normaGodzin}h</p>
-            <p class="summary-label">Norma godzin</p>
-        </div>
-        <div class="summary-item">
-            <p class="summary-number summary-${roznicaKolor}">${roznicaGodzin >= 0 ? '+' : ''}${roznicaGodzin}h</p>
-            <p class="summary-label">Różnica godzin</p>
-        </div>
-        
-        ${monthData.holidays > 0 ? `
-        <div class="summary-divider"></div>
-        <div class="summary-item">
-            <p class="summary-number summary-holiday">${monthData.holidays}</p>
-            <p class="summary-label">Świąt</p>
-        </div>` : ''}
+        <div class="summary-item"><p class="summary-number">${przepracowanoGodzin}h</p><p class="summary-label">Suma godzin</p></div>
+        <div class="summary-item"><p class="summary-number summary-norm">${normaGodzin}h</p><p class="summary-label">Norma godzin</p></div>
+        <div class="summary-item"><p class="summary-number summary-${roznicaKolor}">${roznicaGodzin >= 0 ? '+' : ''}${roznicaGodzin}h</p><p class="summary-label">Różnica godzin</p></div>
+        ${monthData.holidays > 0 ? `<div class="summary-divider"></div><div class="summary-item"><p class="summary-number summary-holiday">${monthData.holidays}</p><p class="summary-label">Świąt</p></div>` : ''}
     `;
 }
 
@@ -783,7 +781,6 @@ document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     loadSettingsFromLocalStorage();
 
-    // Zastosuj ustawienie wyróżniania weekendów
     if (!appSettings.highlightWeekends) {
         document.documentElement.classList.add("hide-weekend-highlight");
     }
@@ -815,7 +812,7 @@ document.addEventListener("DOMContentLoaded", function () {
     render();
 });
 
-// Expose functions to global scope for inline HTML handlers
+// Expose functions to global scope
 window.prevMonth = prevMonth;
 window.nextMonth = nextMonth;
 window.toggleTheme = toggleTheme;
@@ -833,30 +830,3 @@ window.toggleHighlightWeekends = toggleHighlightWeekends;
 window.changeGrafikUrl = changeGrafikUrl;
 window.resetGrafikUrl = resetGrafikUrl;
 window.clearAllData = clearAllData;
-
-
-// Add these to your existing script section
-document.addEventListener("DOMContentLoaded", function () {
-    // Remove draggable attribute from all elements
-    document.querySelectorAll('[draggable="true"]').forEach((el) => {
-        el.removeAttribute("draggable");
-    });
-
-    // Prevent dragstart event
-    document.addEventListener("dragstart", function (e) {
-        e.preventDefault();
-        return false;
-    });
-
-    // Prevent drop event
-    document.addEventListener("drop", function (e) {
-        e.preventDefault();
-        return false;
-    });
-
-    // Prevent dragover event
-    document.addEventListener("dragover", function (e) {
-        e.preventDefault();
-        return false;
-    });
-});
