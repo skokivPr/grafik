@@ -1,0 +1,1311 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+
+:root {
+    --bg: #f8f9fa;
+    --panel-bg: #ffffff;
+    --text-color: #212529;
+    --text-muted: #6c757d;
+    --highlight-color: #ff7300;
+    --border-color: #dee2e6;
+    --card-bg: #f8f9fa;
+    --status-active-bg: #ff7300;
+    --font-primary: "JetBrains Mono", "Share Tech Mono", monaco, courier;
+    --rgb-border-color: 0, 0, 0;
+    /* Paleta kolorów - spójna z głównym motywem */
+    --primary-orange: #ff7300;
+    --primary-orange-light: #ffa64d;
+    --primary-orange-dark: #e65c00;
+    --secondary-red: #e74c3c;
+    --secondary-red-light: #ff6b6b;
+    --secondary-red-dark: #c0392b;
+    --today-bg: 255, 115, 0;
+    /* Kolory weekendów */
+    --saturday-color: var(--primary-orange);
+    --sunday-color: var(--secondary-red);
+    --weekend-bg-light: rgba(255, 115, 0, 0.08);
+    --weekend-bg-sunday-light: rgba(231, 76, 60, 0.08);
+    --bg-rgb: 115, 115, 115;
+    /* Kolory wydarzeń - harmonijne z motywem */
+    --event-work: #3d3d3d;
+    /* Nocka - ciemny niebieski */
+    --event-day: #f39c12;
+    /* Dniówka - złoty */
+    --event-overtime: #9b59b6;
+    /* Nadgodziny - fioletowy */
+    --event-vacation: #2ecc71;
+    /* Urlop - zielony */
+    --event-other: #e74c3c;
+    /* Inne - czerwony */
+
+    /* Kolory ramek dla każdego typu */
+    --primary-work-light: #ff8533;
+    --primary-day-light: #ffa64d;
+    --primary-overtime-light: #ff9f43;
+    --primary-vacation-light: #2ecc71;
+    --primary-other-light: #ff6b6b;
+}
+
+:root[data-theme="dark"] {
+    --bg: #1a1a1a;
+    --panel-bg: #000000;
+    --text-color: #e9ecef;
+    --text-muted: #8d8d8d;
+    --highlight-color: #ff7300;
+    --border-color: #2a2a2a;
+    --card-bg: #1a1a1a;
+    --status-active-bg: var(--highlight-color);
+    --today-bg: 255, 115, 0;
+    /* Kolory weekendów - tryb ciemny */
+    --saturday-color: var(--primary-orange-light);
+    --sunday-color: var(--secondary-red-light);
+    --weekend-bg-light: rgba(255, 166, 77, 0.12);
+    --weekend-bg-sunday-light: rgba(255, 107, 107, 0.12);
+    --rgb-border-color: 255, 255, 255;
+    /* Kolory wydarzeń - tryb ciemny */
+    --event-work: #1a1a1a;
+    /* Nocka - jaśniejszy niebieski */
+    --event-day: #f1c40f;
+    /* Dniówka - jaśniejszy złoty */
+    --event-overtime: #b794f6;
+    /* Nadgodziny - jaśniejszy fioletowy */
+    --event-vacation: #48c78e;
+    /* Urlop - jaśniejszy zielony */
+    --event-other: #ff6b6b;
+    /* Inne - jaśniejszy czerwony */
+    --bg-rgb: 0, 0, 0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: var(--font-primary);
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+iconify-icon {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    vertical-align: middle;
+    font-size: inherit;
+}
+
+/* Ikony w modalach - zapobiegaj miganiu */
+.modal-content iconify-icon {
+    opacity: 1;
+    transition: none;
+}
+
+/* Ikony w przyciskach modali */
+.quick-option-btn iconify-icon,
+.danger-btn iconify-icon,
+.modal-title iconify-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2em;
+    height: 1.2em;
+}
+
+/* Filtry dla ikon img w modalach */
+.quick-option-btn img {
+    filter: brightness(0) saturate(100%) invert(30%);
+    transition: filter 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-right: 0.5rem;
+}
+
+.quick-option-btn:hover img {
+    transform: scale(1.15) rotate(5deg);
+}
+
+:root[data-theme="dark"] .quick-option-btn img {
+    filter: brightness(0) saturate(100%) invert(90%);
+}
+
+:root[data-theme="dark"] .quick-option-btn:hover img {
+    filter: brightness(0) saturate(100%) invert(0%);
+}
+
+.modal-title img {
+    filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1352%) hue-rotate(360deg);
+    vertical-align: middle;
+    margin-right: 0.5rem;
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.modal-title:hover img {
+    transform: rotate(360deg);
+}
+
+:root[data-theme="dark"] .modal-title img {
+    filter: brightness(0) saturate(100%) invert(42%) sepia(93%) saturate(1352%) hue-rotate(360deg);
+}
+
+.danger-btn img {
+    filter: brightness(0) saturate(100%) invert(27%) sepia(51%) saturate(2878%) hue-rotate(346deg);
+    transition: filter 0.3s ease, transform 0.3s ease;
+    margin-right: 0.5rem;
+}
+
+.danger-btn:hover img {
+    filter: brightness(0) saturate(100%) invert(100%);
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% {
+        transform: scale(1.1) translateX(0);
+    }
+
+    25% {
+        transform: scale(1.1) translateX(-3px);
+    }
+
+    75% {
+        transform: scale(1.1) translateX(3px);
+    }
+}
+
+body {
+    background: url(https://raw.githubusercontent.com/skokivPr/img/95ee3d7bbf6a07ffa5287e452ea9a6515203b1f0/container01.svg) no-repeat center center fixed;
+    background-size: cover;
+    background-color: var(--bg);
+    color: var(--text-color);
+    min-height: 100vh;
+    width: 100vw;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    transition:
+        background-color 0.3s,
+        color 0.3s;
+    padding: 0.5rem;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg);
+    background: url(https://raw.githubusercontent.com/skokivPr/img/95ee3d7bbf6a07ffa5287e452ea9a6515203b1f0/container01.svg) no-repeat center center fixed;
+    background-size: cover;
+    z-index: -1;
+    opacity: 0.8;
+    filter: invert(1) brightness(0.5) contrast(1.2);
+}
+
+.panel {
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    padding: 0.5rem;
+    padding-top: 40px;
+    transition:
+        background-color 0.3s,
+        border-color 0.3s;
+    width: 100%;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.panel-header {
+    background: var(--highlight-color);
+    color: #000;
+    padding: 0 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    height: 26px;
+    line-height: 1.5;
+    z-index: 10;
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    text-align: Center;
+}
+
+.panel-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.month-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--highlight-color);
+}
+
+.nav-button,
+.action-buttons button {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 0%;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-button:active,
+.action-buttons button:active {
+    transform: scale(0.95);
+}
+
+iconify-icon {
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+}
+
+.nav-button img,
+.action-buttons button img {
+    filter: brightness(0) saturate(100%) invert(50%) sepia(0%) saturate(0%);
+    transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.nav-button img:hover,
+.action-buttons button img:hover {
+    transform: scale(1.1);
+}
+
+:root[data-theme="dark"] .nav-button img,
+:root[data-theme="dark"] .action-buttons button img {
+    filter: brightness(0) saturate(100%) invert(80%);
+}
+
+.nav-button:hover,
+.action-buttons button:hover {
+    background-color: var(--highlight-color);
+    color: #000;
+    border-color: var(--highlight-color);
+}
+
+.nav-button:hover img,
+.action-buttons button:hover img {
+    filter: brightness(0) saturate(100%) invert(0%);
+}
+
+.nav-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.weekdays-grid,
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+}
+
+.weekdays-grid div {
+    text-align: center;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+/* Nagłówki weekendów */
+.weekdays-grid div:nth-child(6) {
+    color: var(--saturday-color);
+    font-weight: 700;
+}
+
+.weekdays-grid div:nth-child(7) {
+    color: var(--sunday-color);
+    font-weight: 700;
+}
+
+/* Wyróżnienie soboty i niedzieli w siatce kalendarza */
+.calendar-day:nth-child(7n + 6) {
+    background-color: var(--weekend-bg-light);
+    border-left: 2px solid var(--saturday-color);
+}
+
+.calendar-day:nth-child(7n) {
+    background-color: var(--weekend-bg-sunday-light);
+    border-left: 2px solid var(--sunday-color);
+}
+
+.calendar-day {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    min-height: 120px;
+    padding: 0.5rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-size: 0.8rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.calendar-day:hover {
+    border-color: rgba(var(--rgb-border-color), 0.3);
+}
+
+.calendar-day.other-month {
+    opacity: 0.4;
+    pointer-events: none;
+    background-color: transparent;
+}
+
+.day-number {
+    font-weight: 700;
+}
+
+.today-indicator {
+    color: var(--highlight-color);
+    border-radius: 0%;
+    width: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+/* Cała komórka dzisiejszego dnia */
+.calendar-day.today {
+    border-left: 4px solid #ff8533;
+    background-color: var(--weekend-bg-light);
+}
+
+:root[data-theme="dark"] .calendar-day.today {
+    background-color: rgba(255, 115, 0, 0.15);
+    border-left: 4px solid #ff802bb7;
+}
+
+/* Święta państwowe */
+.calendar-day.public-holiday {
+    background-color: rgba(231, 76, 60, 0.1);
+    border-left: 3px solid var(--secondary-red);
+}
+
+:root[data-theme="dark"] .calendar-day.public-holiday {
+    background-color: rgba(231, 76, 60, 0.15);
+    border-left-color: var(--secondary-red-light);
+}
+
+.holiday-indicator {
+    color: var(--secondary-red) !important;
+    font-weight: 700;
+}
+
+:root[data-theme="dark"] .holiday-indicator {
+    color: var(--secondary-red-light) !important;
+}
+
+.events-container.today-events {
+    background-color: transparent;
+    position: relative;
+    z-index: 10;
+}
+
+:root[data-theme="dark"] .events-container.today-events {
+    background-color: transparent;
+}
+
+.events-container.today-events .event {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: var(--primary-orange-dark);
+}
+
+:root[data-theme="dark"] .events-container.today-events .event {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff;
+}
+
+.events-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.event {
+    font-size: 0.9rem;
+    padding: 0px 10px;
+    border-radius: 0;
+    color: #000;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+    transition: opacity 0.2s ease;
+    position: relative;
+    min-height: 26px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.event:hover {
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+.delete-event-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-color);
+    cursor: pointer;
+    opacity: 0;
+    font-size: 1.2rem;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    border-radius: 0;
+}
+
+.delete-event-btn:hover {
+    opacity: 1;
+    background-color: #dc3545;
+    color: #fff;
+}
+
+.event:hover .delete-event-btn {
+    opacity: 0.7;
+}
+
+.event-text {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+
+.event-gray {
+    background-color: #e9ecef;
+    color: #212529;
+    border-left: 4px solid #6c757d;
+    font-weight: 600;
+}
+
+.event-yellow {
+    background-color: #fff3cd;
+    color: #856404;
+    border-left: 4px solid #ffc107;
+    font-weight: 600;
+}
+
+.event-purple {
+    background-color: #fff4e6;
+    color: #cc5500;
+    border-left: 4px solid #ff8c00;
+    font-weight: 600;
+}
+
+.event-green {
+    background-color: #d1f1d3;
+    color: #1d600c;
+    border-left: 4px solid #60b817;
+    font-weight: 600;
+}
+
+.event-blue {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+    font-weight: 600;
+}
+
+/* Dostosowanie kolorów dla trybu ciemnego */
+:root[data-theme="dark"] .event-gray {
+    background-color: #495057;
+    border-left-color: #adb5bd;
+    color: #f8f9fa;
+}
+
+:root[data-theme="dark"] .event-yellow {
+    background-color: #664d03;
+    border-left-color: #ffca2c;
+    color: #fff3cd;
+}
+
+:root[data-theme="dark"] .event-purple {
+    background-color: #cc5500;
+    border-left-color: #ff8c00;
+    color: #fff4e6;
+}
+
+:root[data-theme="dark"] .event-green {
+    background-color: #0a3622;
+    border-left-color: #20c997;
+    color: #d1ecf1;
+}
+
+:root[data-theme="dark"] .event-blue {
+    background-color: #58151c;
+    border-left-color: #f5c6cb;
+    color: #f8d7da;
+}
+
+/* Specjalne kolory wydarzeń dla soboty - czytelne */
+.calendar-day:nth-child(7n + 6) .event-gray {
+    background-color: #ffe0b3;
+    color: #8b4513;
+    border-left-color: #ff8c00;
+}
+
+.calendar-day:nth-child(7n + 6) .event-yellow {
+    background-color: #fff2cc;
+    color: #996600;
+    border-left-color: #ffcc00;
+}
+
+.calendar-day:nth-child(7n + 6) .event-purple {
+    background-color: #ffeacc;
+    color: #b8860b;
+    border-left-color: #daa520;
+}
+
+.calendar-day:nth-child(7n + 6) .event-green {
+    background-color: #ffebcd;
+    color: #228b22;
+    border-left-color: #32cd32;
+    position: relative;
+}
+
+.calendar-day:nth-child(7n + 6) .event-green::before {
+    content: "🏖️";
+    position: absolute;
+    right: 4px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.calendar-day:nth-child(7n + 6) .event-blue {
+    background-color: #ffd4cc;
+    color: #8b0000;
+    border-left-color: #dc143c;
+}
+
+/* Specjalne kolory wydarzeń dla niedzieli - czytelne */
+.calendar-day:nth-child(7n) .event-gray {
+    background-color: #ffcccc;
+    color: #8b0000;
+    border-left-color: #dc143c;
+}
+
+.calendar-day:nth-child(7n) .event-yellow {
+    background-color: #ffeaea;
+    color: #b22222;
+    border-left-color: #ff6b6b;
+}
+
+.calendar-day:nth-child(7n) .event-purple {
+    background-color: #ffe6f1;
+    color: #8b1538;
+    border-left-color: #e91e63;
+}
+
+.calendar-day:nth-child(7n) .event-green {
+    background-color: #ffe0e6;
+    color: #006400;
+    border-left-color: #228b22;
+    position: relative;
+}
+
+.calendar-day:nth-child(7n) .event-green::before {
+    content: "🌴";
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.calendar-day:nth-child(7n) .event-blue {
+    background-color: #ffdddd;
+    color: #8b0000;
+    border-left-color: #ff4444;
+}
+
+.summary-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.summary-title {
+    color: var(--highlight-color);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.summary-content {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    flex-wrap: wrap;
+    gap: 0rem;
+    align-items: center;
+}
+
+.summary-item {
+    min-width: 80px;
+}
+
+.summary-item .summary-number {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.summary-item .summary-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.summary-divider {
+    width: 2px;
+    height: 40px;
+    background-color: var(--border-color);
+    margin: 0 0.5rem;
+}
+
+.summary-norm {
+    color: #3498db;
+}
+
+.summary-holiday {
+    color: var(--secondary-red);
+}
+
+:root[data-theme="dark"] .summary-holiday {
+    color: var(--secondary-red-light);
+}
+
+.summary-total {
+    color: var(--status-active-bg);
+}
+
+.summary-positive {
+    color: #2ecc71;
+}
+
+.summary-negative {
+    color: #e74c3c;
+}
+
+@media (max-width: 768px) {
+    .summary-divider {
+        display: none;
+    }
+
+    .summary-content {
+        gap: 0.75rem;
+    }
+
+    .summary-item {
+        min-width: 70px;
+    }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+}
+
+.modal-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    transition: opacity 0.25s ease, visibility 0s linear 0s;
+}
+
+.modal-content {
+    background-color: var(--panel-bg);
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 500px;
+    transform: translateY(-20px) scale(0.95);
+    opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+
+.modal-overlay.visible .modal-content {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+.modal-title {
+    color: var(--highlight-color);
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.modal-date,
+#confirmation-message {
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.quick-options-title {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+}
+
+.quick-options-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+
+}
+
+.quick-option-btn {
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--text-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-option-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: var(--highlight-color);
+    opacity: 0.3;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+    z-index: 0;
+}
+
+.quick-option-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.quick-option-btn img,
+.quick-option-btn span {
+    position: relative;
+    z-index: 1;
+}
+
+.quick-option-btn:active {
+    transform: scale(0.98);
+}
+
+.quick-option-btn:hover {
+    background-color: var(--highlight-color);
+    border-color: var(--highlight-color);
+    color: #000;
+}
+
+.input-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.event-input {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.event-input:focus {
+    outline: none;
+    border-color: var(--highlight-color);
+}
+
+.modal-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.cancel-btn,
+.save-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+}
+
+.cancel-btn {
+    background-color: var(--card-bg);
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.cancel-btn:hover {
+    background-color: #dc3545;
+    border-color: #dc3545;
+    color: #fff;
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.cancel-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.save-btn {
+    background-color: var(--highlight-color);
+    color: #000;
+    border-color: var(--highlight-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.save-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.save-btn:hover::after {
+    width: 300px;
+    height: 300px;
+}
+
+.save-btn:hover {
+    box-shadow: 0 6px 12px rgba(255, 115, 0, 0.3);
+}
+
+.save-btn:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--panel-bg);
+    color: var(--text-color);
+    padding: 1rem;
+    border: 1px solid var(--highlight-color);
+    border-left-width: 5px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1002;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.4s ease;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification.error {
+    border-left-color: #dc3545;
+}
+
+/* --- PANEL USTAWIEŃ --- */
+.settings-modal-content {
+    max-width: 600px;
+}
+
+.settings-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-section:last-of-type {
+    border-bottom: none;
+}
+
+.settings-section-title {
+    color: var(--highlight-color);
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    letter-spacing: 1px;
+}
+
+.setting-item {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.setting-label {
+    color: var(--text-color);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.setting-select,
+.setting-input {
+    width: 100%;
+    padding: 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    font-family: var(--font-primary);
+    font-size: 0.85rem;
+    transition: border-color 0.2s;
+}
+
+.setting-select:focus,
+.setting-input:focus {
+    outline: none;
+    border-color: var(--highlight-color);
+}
+
+.setting-select {
+    cursor: pointer;
+}
+
+.setting-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--highlight-color);
+}
+
+.danger-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: var(--card-bg);
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.danger-btn:active {
+    transform: scale(0.98);
+}
+
+.danger-btn:hover {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* Ukrywanie wyróżnienia weekendów gdy opcja jest wyłączona */
+:root.hide-weekend-highlight .calendar-day:nth-child(7n + 6),
+:root.hide-weekend-highlight .calendar-day:nth-child(7n) {
+    background-color: var(--card-bg);
+    border-left: 1px solid var(--border-color);
+}
+
+:root.hide-weekend-highlight .weekdays-grid div:nth-child(6),
+:root.hide-weekend-highlight .weekdays-grid div:nth-child(7) {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+
+/* --- MEDIA QUERIES (RESPONSYWNOŚĆ) --- */
+
+/* Tablet i urządzenia mobilne (max 768px) */
+@media (max-width: 768px) {
+
+    /* 1. Dostosowanie głównego kontenera */
+    body {
+        padding: 0;
+        background-attachment: scroll;
+        /* Lepsza wydajność na mobile */
+    }
+
+    .panel {
+        height: 100vh;
+        /* Panel na całą wysokość ekranu */
+        max-width: 100%;
+        border: none;
+        border-radius: 0;
+        padding: 0.5rem;
+        padding-top: 50px;
+        /* Miejsce na nagłówek panelu */
+    }
+
+    /* 2. Nagłówek kalendarza */
+    .calendar-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .month-title {
+        text-align: center;
+        font-size: 1.5rem;
+        order: -1;
+        /* Tytuł zawsze na górze */
+    }
+
+    .nav-controls {
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    .action-buttons {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .nav-button,
+    .action-buttons button {
+        width: 48px;
+        /* Większe przyciski pod palec */
+        height: 48px;
+    }
+
+    /* 3. Transformacja Siatki w Listę */
+
+    /* Ukrywamy nazwy dni tygodnia (Pn, Wt...) w widoku listy, 
+       gdyż dni są jeden pod drugim */
+    .weekdays-grid {
+        display: none;
+    }
+
+    .calendar-grid {
+        /* Zmieniamy siatkę 7-kolumnową na 1-kolumnową */
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        padding-bottom: 20px;
+    }
+
+    .calendar-day {
+        min-height: auto;
+        /* Wysokość dopasowana do treści */
+        flex-direction: row;
+        /* Data obok wydarzeń (opcjonalnie) lub pod */
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 1rem;
+        border-left-width: 6px;
+        /* Szerszy pasek koloru dnia */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Ukrywanie pustych dni z innych miesięcy w widoku mobilnym, 
+       żeby nie zaśmiecały listy */
+    .calendar-day.other-month {
+        display: none;
+    }
+
+    .day-number {
+        font-size: 1.2rem;
+        margin-right: 1rem;
+        min-width: 30px;
+        text-align: center;
+    }
+
+    .events-container {
+        width: 100%;
+        margin-top: 0.5rem;
+    }
+
+    /* 4. Wydarzenia na mobile */
+    .event {
+        padding: 8px 10px;
+        font-size: 1rem;
+        /* Większy tekst */
+        margin-bottom: 4px;
+    }
+
+    .delete-event-btn {
+        width: 30px;
+        height: 30px;
+        opacity: 1;
+        /* Zawsze widoczny przycisk usuwania na mobile */
+        background-color: rgba(255, 255, 255, 0.5);
+        /* Lekkie tło */
+        color: #dc3545;
+    }
+
+    /* 5. Modale na pełną szerokość */
+    .modal-content {
+        width: 100%;
+        height: auto;
+        max-height: 85vh;
+        /* Żeby klawiatura nie zasłoniła wszystkiego */
+        bottom: 0;
+        border-radius: 15px 15px 0 0;
+        position: absolute;
+        /* Przyklejony do dołu jak w iOS/Android */
+        transform: translateY(100%);
+        overflow-y: auto;
+    }
+
+    .modal-overlay.visible .modal-content {
+        transform: translateY(0);
+    }
+
+    .quick-options-container {
+        grid-template-columns: 1fr 1fr;
+        /* Dwie kolumny opcji zamiast wielu */
+    }
+
+    .quick-option-btn {
+        padding: 1rem;
+        /* Większe pola wyboru */
+        justify-content: center;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .quick-option-btn img {
+        margin-right: 0;
+        margin-bottom: 0.5rem;
+        width: 24px;
+        height: 24px;
+    }
+
+    /* 6. Sekcja podsumowania - Ulepszony Grid Kafelkowy */
+    .summary-section {
+        margin-top: 1rem;
+        border-top: none;
+        overflow-x: visible;
+        white-space: normal;
+        padding-bottom: 100px;
+        /* Duży odstęp na dole dla wygody */
+    }
+
+    .summary-content {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        /* Czytelna siatka 2-kolumnowa */
+        gap: 0.75rem;
+        justify-content: stretch;
+    }
+
+    .summary-item {
+        background-color: var(--bg);
+        /* Osobne tło dla kafelka */
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 0.75rem;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .summary-item .summary-number {
+        font-size: 1.3rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .summary-divider {
+        display: none;
+        /* Ukrywamy kreski dzielące w trybie kafelkowym */
+    }
+}
+
+/* Bardzo małe ekrany (poniżej 380px) */
+@media (max-width: 380px) {
+    .calendar-day {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .day-number {
+        margin-bottom: 0.5rem;
+    }
+
+    .quick-options-container {
+        grid-template-columns: 1fr;
+        /* Jedna kolumna opcji */
+    }
+
+    .summary-content {
+        grid-template-columns: 1fr;
+        /* Jeden kafelek pod drugim na bardzo małych ekranach */
+    }
+}
